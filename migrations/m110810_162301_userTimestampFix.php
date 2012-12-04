@@ -25,6 +25,13 @@ class m110810_162301_userTimestampFix extends CDbMigration
                     $this->dropColumn(Yii::app()->getModule('user')->tableUsers,'createtime');
                     $this->dropColumn(Yii::app()->getModule('user')->tableUsers,'lastvisit');
                 break;
+            case "pgsql":
+                    $this->addColumn(Yii::app()->getModule('user')->tableUsers,'create_at',"TIMESTAMP NOT NULL DEFAULT now()");
+                    $this->addColumn(Yii::app()->getModule('user')->tableUsers,'lastvisit_at',"TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00'");
+                    $this->execute("UPDATE ".Yii::app()->getModule('user')->tableUsers." SET create_at = to_timestamp(createtime), lastvisit_at = case when lastvisit > 0 then  to_timestamp(lastvisit) else '1970-01-01 00:00:00' end");
+                    $this->dropColumn(Yii::app()->getModule('user')->tableUsers,'createtime');
+                    $this->dropColumn(Yii::app()->getModule('user')->tableUsers,'lastvisit');
+                break;
             case "sqlite":
             default:
                     $this->addColumn(Yii::app()->getModule('user')->tableUsers,'create_at',"TIMESTAMP");
@@ -56,6 +63,13 @@ class m110810_162301_userTimestampFix extends CDbMigration
                 $this->addColumn(Yii::app()->getModule('user')->tableUsers,'createtime',"int(10) NOT NULL");
                 $this->addColumn(Yii::app()->getModule('user')->tableUsers,'lastvisit',"int(10) NOT NULL");
                 $this->execute("UPDATE ".Yii::app()->getModule('user')->tableUsers." SET createtime = UNIX_TIMESTAMP(create_at), lastvisit = UNIX_TIMESTAMP(lastvisit_at)");
+                $this->dropColumn(Yii::app()->getModule('user')->tableUsers,'create_at');
+                $this->dropColumn(Yii::app()->getModule('user')->tableUsers,'lastvisit_at');
+                break;
+            case "pgsql":
+                $this->addColumn(Yii::app()->getModule('user')->tableUsers,'createtime',"integer NOT NULL default 0");
+                $this->addColumn(Yii::app()->getModule('user')->tableUsers,'lastvisit',"integer NOT NULL default 0");
+                $this->execute("UPDATE ".Yii::app()->getModule('user')->tableUsers." SET createtime = extract(epoch from create_at), lastvisit = extract(epoch from lastvisit_at)");
                 $this->dropColumn(Yii::app()->getModule('user')->tableUsers,'create_at');
                 $this->dropColumn(Yii::app()->getModule('user')->tableUsers,'lastvisit_at');
                 break;

@@ -61,7 +61,46 @@ class m110805_153437_installYiiUser extends CDbMigration
                         "visible" => "int(1) NOT NULL DEFAULT 0",
                     ), $this->MySqlOptions);
                 break;
-            
+            case "pgsql":
+                    $this->createTable(Yii::app()->getModule('user')->tableUsers, array(
+                        "id" => "pk",
+                        "username" => "varchar(20) NOT NULL",
+                        "password" => "varchar(128) NOT NULL",
+                        "email" => "varchar(128) NOT NULL",
+                        "activkey" => "varchar(128) NOT NULL",
+                        "createtime" => "integer NOT NULL DEFAULT 0",
+                        "lastvisit" => "integer NOT NULL DEFAULT 0",
+                        "superuser" => "smallint NOT NULL",
+                        "status" => "smallint NOT NULL",
+                    ));
+                    $this->createIndex('user_username', Yii::app()->getModule('user')->tableUsers, 'username', true);
+                    $this->createIndex('user_email', Yii::app()->getModule('user')->tableUsers, 'email', true);
+                    $this->createTable(Yii::app()->getModule('user')->tableProfiles, array(
+                        'user_id' => 'pk',
+                        'first_name' => 'text',
+                        'last_name' => 'text',
+                    ));
+                    $this->addForeignKey('user_profile_id', Yii::app()->getModule('user')->tableProfiles, 'user_id', Yii::app()->getModule('user')->tableUsers, 'id', 'CASCADE', 'RESTRICT');
+                    $this->createTable(Yii::app()->getModule('user')->tableProfileFields, array(
+                        "id" => "pk",
+                        "varname" => "varchar(50) NOT NULL",
+                        "title" => "varchar(255) NOT NULL",
+                        "field_type" => "varchar(50) NOT NULL",
+                        "field_size" => "integer NOT NULL",
+                        "field_size_min" => "integer NOT NULL",
+                        "required" => "smallint NOT NULL",
+                        "match" => "varchar(255) NOT NULL",
+                        "range" => "varchar(255) NOT NULL",
+                        "error_message" => "varchar(255) NOT NULL",
+                        "other_validator" => "text NOT NULL",
+                        "default" => "varchar(255) NOT NULL",
+                        "widget" => "varchar(255) NOT NULL",
+                        "widgetparams" => "text NOT NULL",
+                        "position" => "integer NOT NULL",
+                        "visible" => "smallint NOT NULL",
+                    ));
+
+                break;
             case "sqlite":
             default:
                     $this->createTable(Yii::app()->getModule('user')->tableUsers, array(
@@ -172,6 +211,11 @@ class m110805_153437_installYiiUser extends CDbMigration
 
 	public function safeDown()
 	{
+        switch ($this->dbType()) {
+            case "mysql":
+            case "pgsql":
+                $this->dropForeignKey('user_profile_id', Yii::app()->getModule('user')->tableProfiles);
+        }
         $this->dropTable(Yii::app()->getModule('user')->tableProfileFields);
         $this->dropTable(Yii::app()->getModule('user')->tableProfiles);
         $this->dropTable(Yii::app()->getModule('user')->tableUsers);
